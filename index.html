@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>ระบบเช็คชื่อ | โรงเรียนเสาไห้วิทยานุกูล</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+:root{
+  --green:#2e9f45;
+  --yellow:#f6d100;
+  --red:#e74c3c;
+}
+*{box-sizing:border-box;font-family:'Segoe UI',sans-serif}
+
+body{
+  margin:0;
+  min-height:100vh;
+  background:linear-gradient(135deg,#e8ffe8,#fffde7);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* ===== LOGIN ===== */
+.login-box{
+  width:380px;
+  background:#fff;
+  padding:40px;
+  border-radius:22px;
+  text-align:center;
+  box-shadow:0 20px 45px rgba(0,0,0,.18);
+}
+
+.school{
+  font-size:22px;
+  font-weight:700;
+  color:var(--green);
+}
+
+.login-box p{
+  color:#777;
+  margin-bottom:25px;
+}
+
+.login-box input{
+  width:100%;
+  padding:13px;
+  margin-bottom:15px;
+  border-radius:14px;
+  border:1px solid #ddd;
+}
+
+.login-box button{
+  width:100%;
+  padding:13px;
+  border:none;
+  border-radius:14px;
+  background:linear-gradient(135deg,var(--green),var(--yellow));
+  color:#fff;
+  font-size:16px;
+  cursor:pointer;
+}
+
+/* ===== APP ===== */
+.app{
+  display:none;
+  width:600px;
+  background:#fff;
+  padding:30px;
+  border-radius:24px;
+  box-shadow:0 20px 45px rgba(0,0,0,.18);
+}
+
+.header{
+  text-align:center;
+  margin-bottom:15px;
+}
+.header h2{color:var(--green)}
+
+.list{
+  max-height:420px;
+  overflow-y:auto;
+}
+
+.student{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:8px 0;
+  border-bottom:1px dashed #eee;
+}
+
+.status{display:flex;gap:8px}
+
+.dot{
+  width:26px;
+  height:26px;
+  border-radius:50%;
+  border:2px solid #ccc;
+  cursor:pointer;
+  transition:.2s;
+}
+.dot:hover{transform:scale(1.15)}
+
+.present{border-color:var(--green)}
+.late{border-color:var(--yellow)}
+.absent{border-color:var(--red)}
+
+.present.active{background:var(--green)}
+.late.active{background:var(--yellow)}
+.absent.active{background:var(--red)}
+
+.legend{
+  display:flex;
+  justify-content:center;
+  gap:15px;
+  font-size:13px;
+  margin-bottom:10px;
+}
+
+.actions{
+  display:flex;
+  gap:12px;
+  margin-top:15px;
+}
+.actions button{
+  flex:1;
+  padding:12px;
+  border:none;
+  border-radius:14px;
+  cursor:pointer;
+}
+.save{background:var(--green);color:#fff}
+.logout{background:var(--yellow)}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div class="login-box" id="loginBox">
+  <div class="school">โรงเรียนเสาไห้วิทยานุกูล</div>
+  <p>ระบบเช็คชื่อออนไลน์</p>
+
+  <input id="username" placeholder="ชื่อผู้ใช้">
+  <input id="password" type="password" placeholder="รหัสผ่าน">
+  <button onclick="doLogin()">เข้าสู่ระบบ</button>
+
+  <p style="font-size:12px;color:#999;margin-top:10px">
+    (teacher / 1234)
+  </p>
+</div>
+
+<!-- APP -->
+<div class="app" id="appBox">
+  <div class="header">
+    <h2>เช็คชื่อประจำวัน</h2>
+    <p id="teacherName"></p>
+  </div>
+
+  <div class="legend">
+    <span><div class="dot present active"></div> มา</span>
+    <span><div class="dot late active"></div> สาย</span>
+    <span><div class="dot absent active"></div> ลา / ขาด</span>
+  </div>
+
+  <div class="list" id="studentList"></div>
+
+  <div class="actions">
+    <button class="save" onclick="save()">บันทึก</button>
+    <button class="logout" onclick="doLogout()">ออกจากระบบ</button>
+  </div>
+</div>
+
+<script>
+// ===== กำหนดรหัสผ่าน =====
+const LOGIN_USER = "teacher";
+const LOGIN_PASS = "1234";
+
+// ===== สร้างนักเรียน 30 คน =====
+const list = document.getElementById("studentList");
+for(let i=1;i<=30;i++){
+  list.innerHTML += `
+    <div class="student">
+      <span>${i}. นักเรียนคนที่ ${i}</span>
+      <div class="status">
+        <div class="dot present" onclick="setStatus(this)"></div>
+        <div class="dot late" onclick="setStatus(this)"></div>
+        <div class="dot absent" onclick="setStatus(this)"></div>
+      </div>
+    </div>`;
+}
+
+// ===== LOGIN =====
+function doLogin(){
+  const u = document.getElementById("username").value;
+  const p = document.getElementById("password").value;
+
+  if(u === LOGIN_USER && p === LOGIN_PASS){
+    document.getElementById("loginBox").style.display="none";
+    document.getElementById("appBox").style.display="block";
+    document.getElementById("teacherName").innerText = "ผู้เช็คชื่อ : " + LOGIN_USER;
+  }else{
+    alert("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง ❌");
+  }
+}
+
+// ===== LOGOUT =====
+function doLogout(){
+  document.getElementById("appBox").style.display="none";
+  document.getElementById("loginBox").style.display="block";
+  document.getElementById("username").value="";
+  document.getElementById("password").value="";
+}
+
+// ===== SET STATUS =====
+function setStatus(el){
+  const group = el.parentElement;
+  group.querySelectorAll('.dot').forEach(d=>d.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ===== SAVE =====
+function save(){
+  alert("บันทึกการเช็คชื่อเรียบร้อยแล้ว ✅");
+}
+</script>
+
+</body>
+</html>
